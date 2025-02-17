@@ -36,8 +36,21 @@ class AutonomousCarSpatialDirection(enum.Enum):
             case AutonomousCarSpatialDirection.LEFT:
                 return (-1, 0)
 
-    # def transform(self, pos: AutonomousCarSpatialPosition):
-    #     x, y = pos
+    def transform(self, pos: AutonomousCarSpatialPosition):
+        # assuming world coordinates, convert to spatial relative
+        # i.e. [5, 0] -> [0, 5] (right), [-5, 0] (back), [0, -5] (left)
+        x, y = pos
+
+        match self:
+            case AutonomousCarSpatialDirection.FRONT:
+                return (x, y)
+            case AutonomousCarSpatialDirection.RIGHT:
+                return (y, x)
+            case AutonomousCarSpatialDirection.BACK:
+                return (-x, y)
+            case AutonomousCarSpatialDirection.LEFT:
+                return (y, -x)
+
     
     def __repr__(self):
         return self.name

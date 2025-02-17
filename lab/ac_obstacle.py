@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 from picarx import Picarx
 
 from ac_state import AutonomousCarState
+from ac_state_spatial import AutonomousCarSpatialPosition
+from ac_obstacle_pathfind import AutonomousCarPathfinding
 
 class AutonomousCarObstacleDetector:
     def __init__(self, state: AutonomousCarState):
@@ -62,15 +64,22 @@ class AutonomousCarObstacleDetector:
 
         self._plot()
 
-    def pathfind(self, dest):
+    def pathfind(self, dest: AutonomousCarSpatialPosition):
         # dest is in world coordinates - convert to relative
-        dest_x, dest_y = dest
-        pos_x, pos_y = self.state.pos
+        dest_w_x, dest_w_y = dest
+        pos_w_x, pos_w_y = self.state.pos
         
-        rel_x, rel_y = dest_x - pos_x, dest_y - pos_y
+        # rel_w is the relative offset from car, in world coordinates
+        rel_w = (dest_w_x - pos_w_x, dest_w_y - pos_w_y)
 
-        # rel_x assumes forward facing
-        # if i'm right facing, 
+        # rel_l is the relative offset from car, in local coordinates (matches rotation)
+        rel_l_x, rel_l_y = self.state.dir.transform(rel_w)
+
+        # rel_m is the local coordinates in numpy
+        rel_m = (int(rel_l_x + self.x), int(rel_l_y + self.y))
+
+        pf = AutonomousCarPathfinding()
+        return pf.pathfind(self.env, (self.x, self.y), rel_m)
 
     def _plot(self):
         plt.imshow(self.env.T, cmap="gray_r", origin="lower")

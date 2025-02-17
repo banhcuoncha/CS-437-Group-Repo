@@ -9,6 +9,7 @@ DangerDistance = 20 # > 20 && < 40 turn around,
 
 
 from ac_state import AutonomousCarState
+from ac_state_spatial import AutonomousCarSpatialDirection
 from ac_movement import AutonomousCarMovement
 from ac_object import AutonomousCarObjectDetector
 from ac_obstacle import AutonomousCarObstacleDetector
@@ -31,6 +32,14 @@ class AutonomousCar:
         input("Press ENTER to continue\n")
 
         self.obstacle_det.scan()
+
+        for path_dir, path_pos in self.obstacle_det.pathfind((30, 30)):
+            if path_dir == AutonomousCarSpatialDirection.FRONT:
+                self.movement.forward(1)
+            elif path_dir == AutonomousCarSpatialDirection.LEFT:
+                self.movement.left()
+            elif path_dir == AutonomousCarSpatialDirection.RIGHT:
+                self.movement.right()
 
         # self.movement.right()
 
