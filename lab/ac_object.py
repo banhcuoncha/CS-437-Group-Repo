@@ -17,24 +17,19 @@ class AutonomousCarObjectDetector:
 
         # measured in seconds
         self.OBSTACLE_TIMEOUT = 3
-        self.REFRESH_TIMEOUT = 0.2
 
         self.has_obstacle = False
 
         self.last_obstacle = 0
-        self.last_refresh = 0
 
     def detect(self) -> bool:
         ctime = time.time()
 
-        if ctime - self.last_refresh >= self.REFRESH_TIMEOUT:
-            if self._identify_object():
-                self.has_obstacle = True
-                self.last_obstacle = ctime
-            elif ctime - self.last_obstacle > self.OBSTACLE_TIMEOUT:
-                self.has_obstacle = False
-
-            self.last_refresh = ctime
+        if self._identify_object():
+            self.has_obstacle = True
+            self.last_obstacle = ctime
+        elif ctime - self.last_obstacle > self.OBSTACLE_TIMEOUT:
+            self.has_obstacle = False
         
         return self.has_obstacle
     

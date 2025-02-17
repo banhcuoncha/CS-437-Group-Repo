@@ -1,6 +1,7 @@
 from picarx import Picarx
 
 import time
+from collections import deque
 
 POWER = 50
 SafeDistance = 40   # > 40 safe
@@ -21,19 +22,44 @@ class AutonomousCar:
         self.movement: AutonomousCarMovement = AutonomousCarMovement(self.state)
         self.object_det: AutonomousCarObjectDetector = AutonomousCarObjectDetector(self.state)
         self.obstacle_det: AutonomousCarObstacleDetector = AutonomousCarObstacleDetector(self.state)
-
-        self.prev_objects = False
     
     def setup(self):
         input("Press ENTER to begin calibration\n")
+        print("Calibrating...")
 
         self.movement.calibrate()
 
         input("Press ENTER to continue\n")
+        print("Continuing to event loop...")
 
-        self.obstacle_det.scan()
+        self.state.goal = (30, 30)
 
-        for path_dir, path_pos in self.obstacle_det.pathfind((30, 30)):
+    def loop(self):
+        # navigation
+        if not self.state.done and (not len(self.state.path) or self.state.path_steps >= self.state.MAX_STEPS):
+            # reset path
+            self.state.path_steps = 0
+            self.state.path.clear()
+
+            # update path
+            self.obstacle_det.scan()
+            self.state.path = deque([dir for dir, _ in self.obstacle_det.pathfind(self.state.goal)])
+
+            # end current loop - wait 1 second to stabilize for object detection
+            time.sleep(1)
+            return
+        
+        objects = self.object_det.detect()
+
+        if objects:
+            print("Objects detected! Stopping.")
+
+            # end current loop
+            return
+        
+        if len(self.state.path):
+            path_dir = self.state.path.popleft()
+
             if path_dir == AutonomousCarSpatialDirection.FRONT:
                 self.movement.forward(1)
             elif path_dir == AutonomousCarSpatialDirection.LEFT:
@@ -41,50 +67,11 @@ class AutonomousCar:
             elif path_dir == AutonomousCarSpatialDirection.RIGHT:
                 self.movement.right()
 
-        # self.movement.right()
-
-        # self.movement.forward(30)
-
-        # self.movement.right()
-        
-        # self.movement.forward(30)
-
-        # self.movement.forward(1)
-        # self.movement.forward(1)
-        # self.movement.forward(1)
-
-        # time.sleep(1)
-
-        # self.movement.backward(1)
-
-        # self.obstacle_det.scan()
-
-        # # find a path to (5cm right, 5cm up)
-        # # returns [(relative direction 0=x, 1=y, number of cm to move), ...]
-        # self.obstacle_det.pathfind(5, 5)
-
-        # # takes 2 steps (2 * GRID_SIZE) cm forward = 10 cm
-        # # the motor does not accelerate linearly so stepping in increments of 5 improves consistency
-        # self.movement.forward(2)
-
-        # TODO: in movement, write logic to turn left in place (angle 35, fwd, angle -35, bwd, angle 0, fwd)
-        
-        # TODO: loop: scan, follow one straight path from pathfind, then repeat loop
-        # NOTE: the pathfind directions are relative to current car direction, not absolute
-
-        pass
-
-    def loop(self):
-        objects = self.object_det.detect()
-
-        if objects != self.prev_objects:
-            print(objects)
-            self.prev_objects = objects
-
-        time.sleep(0.01)
-    
-    def move(self, speed):
-        pass
+            if not len(self.state.path):
+                # now empty -> done
+                self.state.done = True
+            
+            time.sleep(0.02)
 
 
 def main():

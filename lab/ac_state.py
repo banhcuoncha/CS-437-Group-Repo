@@ -1,6 +1,9 @@
-from picarx import Picarx
+from typing import Deque
 
+from collections import deque
 import time
+
+from picarx import Picarx
 
 from ac_state_spatial import AutonomousCarSpatialDirection, AutonomousCarSpatialPosition
 
@@ -8,8 +11,17 @@ class AutonomousCarState:
     def __init__(self, px: Picarx):
         self.px = px
 
+        self.MAX_STEPS = 15
+
         self.pos: AutonomousCarSpatialPosition = (0, 0)
         self.dir: AutonomousCarSpatialDirection = AutonomousCarSpatialDirection.FRONT
+
+        self.goal: AutonomousCarSpatialPosition
+
+        self.path: Deque[AutonomousCarSpatialDirection] = deque()
+        self.path_steps = 0
+
+        self.done = False
     
     def update_dir(self, ccw=False):
         if not ccw:
