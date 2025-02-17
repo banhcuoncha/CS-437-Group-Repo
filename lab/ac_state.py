@@ -11,7 +11,7 @@ class AutonomousCarState:
     def __init__(self, px: Picarx):
         self.px = px
 
-        self.MAX_STEPS = 15
+        self.MAX_STEPS = 60
 
         self.pos: AutonomousCarSpatialPosition = (0, 0)
         self.dir: AutonomousCarSpatialDirection = AutonomousCarSpatialDirection.FRONT

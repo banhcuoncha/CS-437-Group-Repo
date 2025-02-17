@@ -30,7 +30,7 @@ class AutonomousCarObjectDetector:
             self.last_obstacle = ctime
         elif ctime - self.last_obstacle > self.OBSTACLE_TIMEOUT:
             self.has_obstacle = False
-        
+
         return self.has_obstacle
     
     def _identify_object(self) -> bool:

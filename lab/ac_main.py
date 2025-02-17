@@ -32,7 +32,9 @@ class AutonomousCar:
         input("Press ENTER to continue\n")
         print("Continuing to event loop...")
 
-        self.state.goal = (30, 30)
+        # 90, 30
+        # 60, 45
+        self.state.goal = (90, 30)
 
     def loop(self):
         # navigation
@@ -66,6 +68,8 @@ class AutonomousCar:
                 self.movement.left()
             elif path_dir == AutonomousCarSpatialDirection.RIGHT:
                 self.movement.right()
+
+            self.state.path_steps += 1
 
             if not len(self.state.path):
                 # now empty -> done

@@ -16,7 +16,7 @@ class AutonomousCarObstacleDetector:
     def __init__(self, state: AutonomousCarState):
         self.state = state
 
-        self.MAP_SIZE = 100
+        self.MAP_SIZE = 500
 
         self.SERVO_RANGE = (-90, 90) # Servo movement range
         self.SERVO_STEP = 1  # Angle step size for scanning
