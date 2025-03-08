@@ -1,9 +1,13 @@
 <template>
   <div class="flex h-screen w-screen bg-gray-900 text-white">
     <!-- Left panel - Controls and Telemetry -->
-    <div class="flex w-1/2 flex-col items-center justify-center space-y-8">
-      <CarControlSteering :steering-direction="steeringDirection" />
-      <CarControlTelemetry :telemetryData="telemetryData" />
+    <div class="flex w-1/2 flex-col items-center justify-center p-8">
+      <div class="w-full flex flex-col gap-8">
+        <div class="w-full flex justify-center">
+          <CarControlSteering :steering-direction="steeringDirection" />
+        </div>
+        <CarControlTelemetry :telemetryData="telemetryData" />
+      </div>
     </div>
 
     <!-- Right panel - Video Feed -->
