@@ -8,6 +8,7 @@ from picarx import Picarx
 from ac_state_spatial import AutonomousCarSpatialDirection, AutonomousCarSpatialPosition
 
 class AutonomousCarState:
+    
     def __init__(self, px: Picarx):
         self.px = px
 
@@ -46,3 +47,13 @@ class AutonomousCarState:
     def _ultrasonic_read_one(self):
         time.sleep(0.01)
         return self.px.ultrasonic.read()
+    def build_telemetry(self):
+        forward = False
+        info = {}
+        info["car_dir"] = self.dir_current_angle
+        if self.dir_current_angle == 0:
+            forward = True
+        info["forward"] = forward
+        info["camera_dir"] = self.cam_pan_cali_val
+
+
