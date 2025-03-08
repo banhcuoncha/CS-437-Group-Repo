@@ -8,6 +8,7 @@ import socketio
 from aiohttp import web
 from aiohttp.web import middleware
 from aiortc import RTCPeerConnection, RTCSessionDescription, VideoStreamTrack
+from av import VideoFrame
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -45,10 +46,8 @@ class CameraStreamTrack(VideoStreamTrack):
     def __init__(self, camera):
         super().__init__()
         self.camera = camera
-        self.counter = 0
         
     async def recv(self):
-        self.counter += 1
         frame = self.camera.get_frame()
         
         if frame is None:
@@ -61,7 +60,6 @@ class CameraStreamTrack(VideoStreamTrack):
         pts, time_base = await self.next_timestamp()
         
         # Create VideoFrame from numpy array
-        from av import VideoFrame
         video_frame = VideoFrame.from_ndarray(frame, format="rgb24")
         video_frame.pts = pts
         video_frame.time_base = time_base
@@ -95,7 +93,7 @@ async def offer(request):
     pcs.add(pc)
     
     # Create a video source
-    camera = VideoCamera(0)  # 0 is usually the default webcam
+    camera = VideoCamera(1)  # 0 is usually the default webcam
     video_track = CameraStreamTrack(camera)
     
     # Add video track to peer connection
