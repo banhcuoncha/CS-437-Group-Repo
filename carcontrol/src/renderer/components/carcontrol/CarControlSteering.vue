@@ -1,5 +1,10 @@
 <template>
-  <div class="grid grid-cols-3 gap-2">
+  <div 
+    class="grid grid-cols-3 gap-2"
+    @keydown="handleKeyDown"
+    @keyup="handleKeyUp"
+    tabindex="0"
+  >
     <!-- Empty cell -->
     <div></div>
     <!-- Up key (W) -->
@@ -44,12 +49,117 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
-  steeringDirection: {
-    up: boolean;
-    left: boolean;
-    down: boolean;
-    right: boolean;
-  };
+import { ref } from 'vue';
+
+interface SteeringDirection {
+  up: boolean;
+  left: boolean;
+  down: boolean;
+  right: boolean;
+}
+
+const props = defineProps<{
+  disabled?: boolean;
 }>();
+
+const emit = defineEmits<{
+  (e: 'steeringChange', direction: SteeringDirection): void;
+}>();
+
+const steeringDirection = ref<SteeringDirection>({
+  up: false,
+  left: false,
+  down: false,
+  right: false,
+});
+
+const resetSteering = () => {
+  steeringDirection.value = {
+    up: false,
+    left: false,
+    down: false,
+    right: false,
+  };
+  emit('steeringChange', steeringDirection.value);
+};
+
+const handleKeyDown = (e: KeyboardEvent) => {
+  if (props.disabled) return;
+  
+  const key = e.key.toLowerCase();
+  let changed = false;
+
+  switch (key) {
+    case "w":
+      if (!steeringDirection.value.up) {
+        steeringDirection.value.up = true;
+        changed = true;
+      }
+      break;
+    case "a":
+      if (!steeringDirection.value.left) {
+        steeringDirection.value.left = true;
+        changed = true;
+      }
+      break;
+    case "s":
+      if (!steeringDirection.value.down) {
+        steeringDirection.value.down = true;
+        changed = true;
+      }
+      break;
+    case "d":
+      if (!steeringDirection.value.right) {
+        steeringDirection.value.right = true;
+        changed = true;
+      }
+      break;
+  }
+
+  if (changed) {
+    emit('steeringChange', steeringDirection.value);
+  }
+};
+
+const handleKeyUp = (e: KeyboardEvent) => {
+  if (props.disabled) return;
+  
+  const key = e.key.toLowerCase();
+  let changed = false;
+
+  switch (key) {
+    case "w":
+      if (steeringDirection.value.up) {
+        steeringDirection.value.up = false;
+        changed = true;
+      }
+      break;
+    case "a":
+      if (steeringDirection.value.left) {
+        steeringDirection.value.left = false;
+        changed = true;
+      }
+      break;
+    case "s":
+      if (steeringDirection.value.down) {
+        steeringDirection.value.down = false;
+        changed = true;
+      }
+      break;
+    case "d":
+      if (steeringDirection.value.right) {
+        steeringDirection.value.right = false;
+        changed = true;
+      }
+      break;
+  }
+
+  if (changed) {
+    emit('steeringChange', steeringDirection.value);
+  }
+};
+
+defineExpose({
+  resetSteering
+});
 </script>

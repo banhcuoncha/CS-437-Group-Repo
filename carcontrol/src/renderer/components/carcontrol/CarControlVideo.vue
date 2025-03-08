@@ -9,40 +9,47 @@
         muted
       />
     </div>
-    <input
-      v-model="remoteHost"
-      type="text"
-      placeholder="Remote Host URL"
-      class="w-full rounded-lg px-4 py-3 bg-gray-800 text-white border border-gray-700 focus:border-blue-500 focus:outline-none"
-    />
-    <button 
-      @click="connectionState === 'connected' ? stopStream() : startStream()"
-      :disabled="connectionState === 'connecting'"
-      class="w-full rounded-lg px-4 py-3 font-semibold transition-colors duration-200"
-      :class="{
-        'bg-green-500 hover:bg-green-600': connectionState === 'disconnected',
-        'bg-red-500 hover:bg-red-600': connectionState === 'connected',
-        'bg-yellow-500 cursor-not-allowed': connectionState === 'connecting'
-      }"
-    >
-      {{ 
-        connectionState === 'connecting' 
-          ? 'Connecting...' 
-          : (connectionState === 'connected' ? 'Disconnect' : 'Connect') 
-      }}
-    </button>
+    <div class="flex items-center justify-center gap-2">
+      <div 
+        class="w-2 h-2 rounded-full"
+        :class="{
+          'bg-green-500': connectionState === 'connected',
+          'bg-yellow-500': connectionState === 'connecting',
+          'bg-red-500': connectionState === 'disconnected'
+        }"
+      ></div>
+      <span class="text-sm text-gray-300">
+        {{ 
+          connectionState === 'connecting' 
+            ? 'Connecting to video feed...' 
+            : (connectionState === 'connected' ? 'Video feed connected' : 'Video feed disconnected') 
+        }}
+      </span>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onUnmounted } from 'vue';
+import { ref, onUnmounted, watch } from 'vue';
 
 type ConnectionState = 'disconnected' | 'connecting' | 'connected';
+
+const props = defineProps<{
+  remoteHost: string;
+  remoteConnected: boolean;
+}>();
 
 const videoRef = ref<HTMLVideoElement | null>(null);
 const peerConnection = ref<RTCPeerConnection | null>(null);
 const connectionState = ref<ConnectionState>('disconnected');
-const remoteHost = ref('http://localhost:5174');
+
+watch(() => props.remoteConnected, (newValue) => {
+  if (newValue) {
+    startStream();
+  } else {
+    stopStream();
+  }
+});
 
 const startStream = async () => {
   try {
@@ -90,7 +97,7 @@ const startStream = async () => {
 
     await pc.setLocalDescription(offer);
 
-    const response = await fetch(`${remoteHost.value}/offer`, {
+    const response = await fetch(`${props.remoteHost}/offer`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
