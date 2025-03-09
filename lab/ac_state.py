@@ -54,6 +54,8 @@ class AutonomousCarState:
         if self.dir_current_angle == 0:
             forward = True
         info["forward"] = forward
-        info["camera_dir"] = self.cam_pan_cali_val
+        info["camera_dir"] = self.cam_pan_cali_val  
+
+        return info
 
 
