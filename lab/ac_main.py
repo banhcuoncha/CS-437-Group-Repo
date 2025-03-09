@@ -12,7 +12,7 @@ DangerDistance = 20 # > 20 && < 40 turn around,
 from ac_state import AutonomousCarState
 from ac_state_spatial import AutonomousCarSpatialDirection
 from ac_movement import AutonomousCarMovement
-from ac_object import AutonomousCarObjectDetector
+from ac_video import AutonomousCarVideo
 from ac_obstacle import AutonomousCarObstacleDetector
 
 class AutonomousCar:
@@ -20,7 +20,7 @@ class AutonomousCar:
         self.state: AutonomousCarState = AutonomousCarState(px)
 
         self.movement: AutonomousCarMovement = AutonomousCarMovement(self.state)
-        self.object_det: AutonomousCarObjectDetector = AutonomousCarObjectDetector(self.state)
+        self.video: AutonomousCarVideo = AutonomousCarVideo(self.state)
         self.obstacle_det: AutonomousCarObstacleDetector = AutonomousCarObstacleDetector(self.state)
     
     def setup(self):
@@ -36,7 +36,16 @@ class AutonomousCar:
         # 60, 45
         self.state.goal = (90, 30)
 
-    def loop(self):
+    def start_loop(self):
+        self.state.loop.create_task(self._loop())
+
+        self.state.loop.run_forever()
+
+    def _loop(self):
+        while True:
+            self._loop_one()
+
+    def _loop_one(self):
         # navigation
         if not self.state.done and (not len(self.state.path) or self.state.path_steps >= self.state.MAX_STEPS):
             # reset path
@@ -51,7 +60,7 @@ class AutonomousCar:
             time.sleep(1)
             return
         
-        objects = self.object_det.detect()
+        objects = self.video.detect()
 
         if objects:
             print("Objects detected! Stopping.")
@@ -92,9 +101,7 @@ def main():
     car = AutonomousCar(px)
 
     car.setup()
-
-    while True:
-        car.loop()
+    car.start_loop()
 
 
 if __name__ == "__main__":

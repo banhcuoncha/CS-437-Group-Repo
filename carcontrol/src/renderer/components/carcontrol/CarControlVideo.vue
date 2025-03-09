@@ -43,8 +43,8 @@ const videoRef = ref<HTMLVideoElement | null>(null);
 const peerConnection = ref<RTCPeerConnection | null>(null);
 const connectionState = ref<ConnectionState>('disconnected');
 
-watch(() => props.remoteConnected, (newValue) => {
-  if (newValue) {
+watch(() => props.remoteConnected, (_remoteConnected) => {
+  if (_remoteConnected) {
     startStream();
   } else {
     stopStream();
@@ -97,7 +97,7 @@ const startStream = async () => {
 
     await pc.setLocalDescription(offer);
 
-    const response = await fetch(`${props.remoteHost}/offer`, {
+    const response = await fetch(`${props.remoteHost}/webrtc/offer`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -112,7 +112,6 @@ const startStream = async () => {
     await pc.setRemoteDescription(new RTCSessionDescription(answer));
 
     console.log('WebRTC connection established');
-
   } catch (error) {
     console.error('Error starting stream:', error);
     connectionState.value = 'disconnected';

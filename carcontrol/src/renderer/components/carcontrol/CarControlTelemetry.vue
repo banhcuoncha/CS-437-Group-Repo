@@ -4,16 +4,16 @@
       <h2 class="mb-4 text-xl font-bold">Telemetry Data</h2>
       <div class="space-y-2">
         <div class="flex justify-between">
-          <span>Distance Travelled:</span>
-          <span class="font-mono">{{ telemetryData.distance }} m</span>
+          <span>Battery:</span>
+          <span class="font-mono">{{ (telemetryData.battery*100).toFixed(0) }}%</span>
         </div>
         <div class="flex justify-between">
-          <span>Current Speed:</span>
-          <span class="font-mono">{{ telemetryData.speed }} km/h</span>
+          <span>Moving:</span>
+          <span class="font-mono">{{ telemetryData.moving ? 'Yes' : 'No' }}</span>
         </div>
         <div class="flex justify-between">
-          <span>Time Elapsed:</span>
-          <span class="font-mono">{{ telemetryData.time }} s</span>
+          <span>Turning:</span>
+          <span class="font-mono">{{ getTurningStatus() }} ({{ telemetryData.turning_angle.toFixed(0) }})</span>
         </div>
       </div>
     </div>
@@ -21,13 +21,23 @@
 </template>
 
 <script setup lang="ts">
-interface TelemetryData {
-  distance: number;
-  speed: number;
-  time: number;
+export interface TelemetryData {
+  turning_angle: number;
+  battery: number;
+  moving: boolean;
 }
 
-defineProps<{
+const props = defineProps<{
   telemetryData: TelemetryData;
 }>();
+
+const getTurningStatus = () => {
+  if (props.telemetryData.turning_angle < 0) {
+    return 'Left';
+  } else if (props.telemetryData.turning_angle > 0) {
+    return 'Right';
+  } else {
+    return 'Forward';
+  }
+}
 </script>

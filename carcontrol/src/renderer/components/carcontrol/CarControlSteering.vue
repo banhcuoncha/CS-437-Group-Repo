@@ -3,6 +3,7 @@
     class="grid grid-cols-3 gap-2"
     @keydown="handleKeyDown"
     @keyup="handleKeyUp"
+    @blur="resetSteering"
     tabindex="0"
   >
     <!-- Empty cell -->
@@ -51,16 +52,12 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-interface SteeringDirection {
+export interface SteeringDirection {
   up: boolean;
   left: boolean;
   down: boolean;
   right: boolean;
 }
-
-const props = defineProps<{
-  disabled?: boolean;
-}>();
 
 const emit = defineEmits<{
   (e: 'steeringChange', direction: SteeringDirection): void;
@@ -80,12 +77,11 @@ const resetSteering = () => {
     down: false,
     right: false,
   };
+
   emit('steeringChange', steeringDirection.value);
 };
 
-const handleKeyDown = (e: KeyboardEvent) => {
-  if (props.disabled) return;
-  
+const handleKeyDown = (e: KeyboardEvent) => {  
   const key = e.key.toLowerCase();
   let changed = false;
 
@@ -122,8 +118,6 @@ const handleKeyDown = (e: KeyboardEvent) => {
 };
 
 const handleKeyUp = (e: KeyboardEvent) => {
-  if (props.disabled) return;
-  
   const key = e.key.toLowerCase();
   let changed = false;
 
@@ -158,8 +152,4 @@ const handleKeyUp = (e: KeyboardEvent) => {
     emit('steeringChange', steeringDirection.value);
   }
 };
-
-defineExpose({
-  resetSteering
-});
 </script>

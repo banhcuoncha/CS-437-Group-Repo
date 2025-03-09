@@ -5,7 +5,7 @@ from vilib import Vilib
 
 from ac_state import AutonomousCarState
 
-class AutonomousCarObjectDetector:
+class AutonomousCarVideo:
     def __init__(self, state: AutonomousCarState):
         self.state = state
 

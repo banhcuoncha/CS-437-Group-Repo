@@ -1,3 +1,4 @@
+import asyncio
 from typing import Deque
 
 from collections import deque
@@ -10,6 +11,8 @@ from ac_state_spatial import AutonomousCarSpatialDirection, AutonomousCarSpatial
 class AutonomousCarState:
     
     def __init__(self, px: Picarx):
+        self.loop = asyncio.new_event_loop()
+
         self.px = px
 
         self.MAX_STEPS = 60
@@ -47,6 +50,7 @@ class AutonomousCarState:
     def _ultrasonic_read_one(self):
         time.sleep(0.01)
         return self.px.ultrasonic.read()
+
     def build_telemetry(self):
         forward = False
         info = {}
@@ -58,4 +62,6 @@ class AutonomousCarState:
 
         return info
 
-
+    def video_read(self):
+        # return Vilib.img
+        pass

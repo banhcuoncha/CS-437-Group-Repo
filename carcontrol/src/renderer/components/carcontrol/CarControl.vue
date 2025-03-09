@@ -6,9 +6,7 @@
         <div class="w-full flex flex-col gap-8">
           <div class="w-full flex justify-center">
             <CarControlSteering 
-              ref="steeringRef"
-              :disabled="remoteInputFocused"
-              @steering-change="handleSteeringChange" 
+              @steeringChange="handleSteeringUpdate" 
             />
           </div>
           <CarControlTelemetry :telemetryData="telemetryData" />
@@ -26,12 +24,11 @@
       <input
         v-model="remoteHost"
         type="text"
-        class="flex-1 rounded-lg px-4 py-3 bg-gray-900 text-white border border-gray-700 focus:border-blue-500 focus:outline-none"
-        @focus="handleInputFocus"
-        @blur="remoteInputFocused = false"
+        :disabled="remoteConnected"
+        class="flex-1 rounded-lg px-4 py-3 bg-gray-900 text-white border border-gray-700 focus:border-blue-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
       />
       <button 
-        @click="toggleConnection"
+        @click="remoteConnected ? disconnectRemote() : connectRemote()"
         class="rounded-lg px-6 py-3 font-semibold transition-colors duration-200"
         :class="{
           'bg-green-500 hover:bg-green-600': !remoteConnected,
@@ -45,42 +42,72 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import CarControlSteering from "./CarControlSteering.vue";
+import { ref, watch } from "vue";
+
+import CarControlSteering, { SteeringDirection } from "./CarControlSteering.vue";
 import CarControlVideo from "./CarControlVideo.vue";
-import CarControlTelemetry from "./CarControlTelemetry.vue";
+import CarControlTelemetry, { TelemetryData } from "./CarControlTelemetry.vue";
 
-interface SteeringDirection {
-  up: boolean;
-  left: boolean;
-  down: boolean;
-  right: boolean;
-}
+import { io, Socket } from "socket.io-client";
 
-const steeringRef = ref<InstanceType<typeof CarControlSteering> | null>(null);
+const socket = ref<Socket | null>(null);
 
-const telemetryData = ref({
-  distance: 0,
-  speed: 0,
-  time: 0,
+const telemetryData = ref<TelemetryData | null>({
+  turning_angle: 0,
+  battery: 0.42,
+  moving: false
 });
 
 const remoteHost = ref('http://localhost:5174');
 const remoteConnected = ref(false);
-const remoteInputFocused = ref(false);
 
-const handleInputFocus = () => {
-  remoteInputFocused.value = true;
-  steeringRef.value?.resetSteering();
+const handleTelemetryUpdate = (data: TelemetryData) => {
+  console.log('Received telemetry');
+  // telemetryData.value = data;
 };
 
-const toggleConnection = () => {
-  remoteConnected.value = !remoteConnected.value;
-};
-
-const handleSteeringChange = (direction: SteeringDirection) => {
-  // Handle the steering change event here
+const handleSteeringUpdate = (direction: SteeringDirection) => {
   console.log('Steering changed:', direction);
-  // You can send this to your backend or handle it however needed
 };
+
+watch(socket, () => {
+  if (!socket.value) {
+    remoteConnected.value = false;
+    return;
+  }
+
+  socket.value.on('telemetry', handleTelemetryUpdate);
+
+  socket.value.on('connect', () => {
+    console.log('Connected to socket server');
+    remoteConnected.value = true;
+  });
+
+  socket.value.on('disconnect', () => {
+    console.log('Disconnected from socket server');
+    socket.value = null;
+  });
+
+  socket.value.on('connect_error', (error) => {
+    console.error('Connection error:', error);
+    socket.value = null;
+  });
+});
+
+const disconnectRemote = () => {
+  if (socket.value) {
+    socket.value.disconnect();
+    socket.value = null;
+  }
+}
+
+const connectRemote = () => {
+  disconnectRemote();
+
+  try {
+    socket.value = io(remoteHost.value);
+  } catch (error) {
+    console.error('Failed to create socket connection:', error);
+  }
+}
 </script>
