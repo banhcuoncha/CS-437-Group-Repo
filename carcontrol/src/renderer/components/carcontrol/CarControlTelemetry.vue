@@ -4,16 +4,16 @@
       <h2 class="mb-4 text-xl font-bold">Telemetry Data</h2>
       <div class="space-y-2">
         <div class="flex justify-between">
-          <span>Battery:</span>
-          <span class="font-mono">{{ (telemetryData.battery*100).toFixed(0) }}%</span>
+          <span>Forward:</span>
+          <span class="font-mono">{{ telemetryData.forward ? 'Yes' : 'No' }}</span>
         </div>
         <div class="flex justify-between">
-          <span>Moving:</span>
-          <span class="font-mono">{{ telemetryData.moving ? 'Yes' : 'No' }}</span>
+          <span>Camera Direction:</span>
+          <span class="font-mono">{{ telemetryData.camera_dir.toFixed(0) }}</span>
         </div>
         <div class="flex justify-between">
-          <span>Turning:</span>
-          <span class="font-mono">{{ getTurningStatus() }} ({{ telemetryData.turning_angle.toFixed(0) }})</span>
+          <span>Car Direction:</span>
+          <span class="font-mono">{{ getTurningStatus() }} ({{ telemetryData.car_dir.toFixed(0) }})</span>
         </div>
       </div>
     </div>
@@ -22,9 +22,9 @@
 
 <script setup lang="ts">
 export interface TelemetryData {
-  turning_angle: number;
-  battery: number;
-  moving: boolean;
+  car_dir: number;
+  camera_dir: number;
+  forward: boolean;
 }
 
 const props = defineProps<{
@@ -32,9 +32,9 @@ const props = defineProps<{
 }>();
 
 const getTurningStatus = () => {
-  if (props.telemetryData.turning_angle < 0) {
+  if (props.telemetryData.car_dir < 0) {
     return 'Left';
-  } else if (props.telemetryData.turning_angle > 0) {
+  } else if (props.telemetryData.car_dir > 0) {
     return 'Right';
   } else {
     return 'Forward';

@@ -6,8 +6,15 @@
     @blur="resetSteering"
     tabindex="0"
   >
-    <!-- Empty cell -->
-    <div></div>
+    <!-- Q key -->
+    <div
+      :class="[
+        'flex h-16 w-16 items-center justify-center rounded border-2 font-bold',
+        steeringDirection.q ? 'border-blue-400 bg-blue-600' : 'border-gray-600',
+      ]"
+    >
+      Q
+    </div>
     <!-- Up key (W) -->
     <div
       :class="[
@@ -17,8 +24,15 @@
     >
       W
     </div>
-    <!-- Empty cell -->
-    <div></div>
+    <!-- E key -->
+    <div
+      :class="[
+        'flex h-16 w-16 items-center justify-center rounded border-2 font-bold',
+        steeringDirection.e ? 'border-blue-400 bg-blue-600' : 'border-gray-600',
+      ]"
+    >
+      E
+    </div>
     <!-- Left key (A) -->
     <div
       :class="[
@@ -57,6 +71,8 @@ export interface SteeringDirection {
   left: boolean;
   down: boolean;
   right: boolean;
+  q: boolean;
+  e: boolean;
 }
 
 const emit = defineEmits<{
@@ -68,6 +84,8 @@ const steeringDirection = ref<SteeringDirection>({
   left: false,
   down: false,
   right: false,
+  q: false,
+  e: false,
 });
 
 const resetSteering = () => {
@@ -76,6 +94,8 @@ const resetSteering = () => {
     left: false,
     down: false,
     right: false,
+    q: false,
+    e: false,
   };
 
   emit('steeringChange', steeringDirection.value);
@@ -107,6 +127,18 @@ const handleKeyDown = (e: KeyboardEvent) => {
     case "d":
       if (!steeringDirection.value.right) {
         steeringDirection.value.right = true;
+        changed = true;
+      }
+      break;
+    case "q":
+      if (!steeringDirection.value.q) {
+        steeringDirection.value.q = true;
+        changed = true;
+      }
+      break;
+    case "e":
+      if (!steeringDirection.value.e) {
+        steeringDirection.value.e = true;
         changed = true;
       }
       break;
@@ -143,6 +175,18 @@ const handleKeyUp = (e: KeyboardEvent) => {
     case "d":
       if (steeringDirection.value.right) {
         steeringDirection.value.right = false;
+        changed = true;
+      }
+      break;
+    case "q":
+      if (steeringDirection.value.q) {
+        steeringDirection.value.q = false;
+        changed = true;
+      }
+      break;
+    case "e":
+      if (steeringDirection.value.e) {
+        steeringDirection.value.e = false;
         changed = true;
       }
       break;

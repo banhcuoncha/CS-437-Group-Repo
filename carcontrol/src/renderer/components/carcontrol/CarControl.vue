@@ -53,9 +53,9 @@ import { io, Socket } from "socket.io-client";
 const socket = ref<Socket | null>(null);
 
 const telemetryData = ref<TelemetryData | null>({
-  turning_angle: 0,
-  battery: 0.42,
-  moving: false
+  car_dir: 0,
+  camera_dir: 0,
+  forward: false
 });
 
 const remoteHost = ref('http://localhost:5174');
@@ -63,11 +63,15 @@ const remoteConnected = ref(false);
 
 const handleTelemetryUpdate = (data: TelemetryData) => {
   console.log('Received telemetry');
-  // telemetryData.value = data;
+  telemetryData.value = data;
 };
 
 const handleSteeringUpdate = (direction: SteeringDirection) => {
   console.log('Steering changed:', direction);
+
+  if (socket.value) {
+    socket.value.emit('steering', direction);
+  }
 };
 
 watch(socket, () => {
@@ -105,7 +109,9 @@ const connectRemote = () => {
   disconnectRemote();
 
   try {
-    socket.value = io(remoteHost.value);
+    socket.value = io(remoteHost.value, {
+      reconnectionAttempts: 2
+    });
   } catch (error) {
     console.error('Failed to create socket connection:', error);
   }
