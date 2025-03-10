@@ -11,7 +11,7 @@ class AutonomousCarVideo:
 
         Vilib.camera_start(vflip=False, hflip=False)
         Vilib.show_fps()
-        Vilib.display(local=False, web=True)
+        Vilib.display(local=False, web=False)
         Vilib.face_detect_switch(True)
         Vilib.traffic_detect_switch(True)
 

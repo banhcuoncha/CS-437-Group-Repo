@@ -1,7 +1,9 @@
 import json
+import threading
 from typing import Optional
 
 import asyncio
+from ac_state import AutonomousCarState
 import socketio
 
 from aiohttp import web
@@ -12,28 +14,17 @@ import numpy as np
 import cv2
 from av import VideoFrame
 
-class VideoCamera:
-    def __init__(self, device_id=0):
-        self.camera = cv2.VideoCapture(device_id)
-        self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-        
-    def __del__(self):
-        self.camera.release()
-        
-    def get_frame(self):
-        success, frame = self.camera.read()
-        if not success:
-            return np.zeros((480, 640, 3), dtype=np.uint8)
-        return frame
-
 class CameraStreamTrack(VideoStreamTrack):
-    def __init__(self, camera):
+    def __init__(self, state: AutonomousCarState):
         super().__init__()
-        self.camera = camera
+        self.state = state
         
     async def recv(self):
-        frame = self.camera.get_frame()
+        frame = self.state.video_read()
+
+        if not isinstance(frame, np.ndarray):
+            frame = np.zeros((640, 480, 3))
+
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         
         pts, time_base = await self.next_timestamp()
@@ -43,9 +34,12 @@ class CameraStreamTrack(VideoStreamTrack):
         
         return video_frame
 
-class AutonomousCarWeb:
-    def __init__(self, loop):
-        self.loop = loop
+class AutonomousCarWeb(threading.Thread):
+    def __init__(self, state: AutonomousCarState):
+        super().__init__()
+
+        self.state = state
+        self.loop = asyncio.new_event_loop()
 
         self.app = web.Application()
         self.app_runner = web.AppRunner(self.app)
@@ -59,8 +53,6 @@ class AutonomousCarWeb:
             )
         })
 
-        self.camera = self._webrtc_setup_camera()
-
         self.webrtc_pcs = set()
         webrtc_route = self.app.router.add_post('/webrtc/offer', self._webrtc_handle_offer)
         self.cors.add(webrtc_route)
@@ -71,21 +63,33 @@ class AutonomousCarWeb:
         self.sio.attach(self.app)
 
         self.sio.on('connect', self._sio_on_connect)
-        self.sio.on('disconnect', self._sio_on_disconnect)
+        self.sio.on('disconnect', self._sio_on_disconnect)        
+
+        self.sio.on('steering', self._sio_on_steering)
+
+    def run(self):
+        self.loop.create_task(self.setup())
+        self.loop.create_task(self.send_telemetry())
+
+        self.loop.run_forever()
 
     def __del__(self):
         self.loop.run_until_complete(self.app_runner.cleanup())
 
-    async def setup(self, host='0.0.0.0', port=5174):
+    async def setup(self, port=5174):
         await self.app_runner.setup()
 
-        self.site = web.TCPSite(self.app_runner, host, port)
+        self.site = web.TCPSite(self.app_runner, port=port)
         await self.site.start()
 
-        print(f'Web server started at http://{host}:{port}')
+        print(f'Web server started at port {port}')
 
-    def emit_telemetry(self, data: dict[str, any]):
-        self.loop.create_task(self.sio.emit('telemetry', data))
+    async def send_telemetry(self):
+        while True:
+            data = self.state.build_telemetry()
+
+            await self.sio.emit('telemetry', data)
+            await asyncio.sleep(0.5)
 
     async def _sio_on_connect(self, sid, environ):
         print('SocketIO Connected: ', sid)
@@ -93,8 +97,29 @@ class AutonomousCarWeb:
     async def _sio_on_disconnect(self, sid):
         print('SocketIO Disconnected: ', sid)
 
-    def _webrtc_setup_camera(self):
-        return VideoCamera(1)
+    async def _sio_on_steering(self, sid, data):
+        up, down, left, right = data['up'], data['down'], data['left'], data['right']
+        q, e = data['q'], data['e']
+
+        vert_dir = 0
+        if up and not down:
+            vert_dir = 1
+        elif down and not up:
+            vert_dir = -1
+        
+        horiz_dir = 0
+        if right and not left:
+            horiz_dir = 1
+        elif left and not right:
+            horiz_dir = -1
+
+        pan_dir = 0
+        if e and not q:
+            pan_dir = 1
+        elif q and not e:
+            pan_dir = -1
+        
+        self.state.update_control(vert_dir, horiz_dir, pan_dir)
 
     async def _webrtc_handle_offer(self, request: web.Request):
         params = await request.json()
@@ -103,7 +128,7 @@ class AutonomousCarWeb:
         pc = RTCPeerConnection()
         self.webrtc_pcs.add(pc)
 
-        pc.addTrack(CameraStreamTrack(self.camera))
+        pc.addTrack(CameraStreamTrack(self.state))
 
         self._webrtc_setup_pc(pc)
 
@@ -136,16 +161,16 @@ class AutonomousCarWeb:
         await asyncio.gather(*[pc.close() for pc in self.webrtc_pcs])
         self.webrtc_pcs.clear()
 
-loop = asyncio.new_event_loop()
-ac_web = AutonomousCarWeb(loop)
+# loop = asyncio.new_event_loop()
+# ac_web = AutonomousCarWeb(loop)
 
-loop.create_task(ac_web.setup())
+# loop.create_task(ac_web.setup())
 
-async def loop_telemetry():
-    while True:
-        ac_web.emit_telemetry({'test': 'test'})
-        await asyncio.sleep(1)
+# async def loop_telemetry():
+#     while True:
+#         ac_web.emit_telemetry({'test': 'test'})
+#         await asyncio.sleep(1)
 
-loop.create_task(loop_telemetry())
+# loop.create_task(loop_telemetry())
 
-loop.run_forever()
+# loop.run_forever()

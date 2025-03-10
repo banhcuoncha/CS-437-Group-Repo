@@ -19,12 +19,12 @@ class AutonomousCarMovement:
     def px(self):
         return self.state.px
 
-    def calibrate(self):
+    async def calibrate(self):
         # initial read
         dist_t0 = self.state.ultrasonic_read(self.CALIBRATE_SAMPLES)
 
         # move forward
-        [self.forward(1) for _ in range(self.CALIBRATE_STEPS)]
+        [await self.forward(1) for _ in range(self.CALIBRATE_STEPS)]
         time.sleep(self.CALIBRATE_PAUSE)
 
         # middle read
@@ -41,57 +41,75 @@ class AutonomousCarMovement:
         print(f"Calibration results. Previous: {init_cm_time}, Now: {self.CM_TIME}")
 
         # move backward
-        [self.backward(1) for _ in range(self.CALIBRATE_STEPS)]
+        [await self.backward(1) for _ in range(self.CALIBRATE_STEPS)]
         time.sleep(self.CALIBRATE_PAUSE)
 
-    def forward(self, steps):
+    async def forward(self, steps):
+        self.state.forward = True
         for i in range(steps):
             self._forward()
             self.state.update_pos_delta()
 
             time.sleep(0.05)
+        self.state.forward = False
     
-    def backward(self, steps):
+    async def backward(self, steps):
+        self.state.forward = True
         for i in range(steps):
             self._backward()
             self.state.update_pos_delta(True)
 
             time.sleep(0.05)
+        self.state.forward = False
 
-    def right(self):
+    async def right(self):
+        self.state.forward = True
         self._backward(10)
 
-        self.px.set_dir_servo_angle(35)
+        self._set_dir_servo_angle(35)
         self._forward(25)
 
-        self.px.set_dir_servo_angle(-35)
+        self._set_dir_servo_angle(-35)
         self._backward(8)
 
-        self.px.set_dir_servo_angle(0)
+        self._set_dir_servo_angle(0)
         self._backward(5)
 
         self.state.update_dir()
+        self.state.forward = False
 
-    def left(self):
+    async def left(self):
+        self.state.forward = True
         self._backward(8)
 
-        self.px.set_dir_servo_angle(-35)
+        self._set_dir_servo_angle(-35)
         self._forward(26)
 
-        self.px.set_dir_servo_angle(35)
+        self._set_dir_servo_angle(35)
         self._backward(9)
 
-        self.px.set_dir_servo_angle(0)
+        self._set_dir_servo_angle(0)
         self._backward(8)
 
         self.state.update_dir(True)
+        self.state.forward = False
+
+    def _set_dir_servo_angle(self, angle: float):
+        self.px.set_dir_servo_angle(angle)
+        self.state.angle = angle
+
+    def _set_motor_forward(self, speed: float):
+        self.px.forward(speed)
+
+    def _set_motor_backward(self, speed: float):
+        self.px.backward(speed)
     
     def _forward(self, steps=1):
-        self.px.forward(self.SPEED)
+        self._set_motor_forward(self.SPEED)
         time.sleep(abs(steps) * self.CM_TIME)
-        self.px.forward(0)
+        self._set_motor_forward(0)
     
     def _backward(self, steps=1):
-        self.px.backward(self.SPEED * self.BW_MULT)
+        self._set_motor_backward(self.SPEED * self.BW_MULT)
         time.sleep(abs(steps) * self.CM_TIME)
-        self.px.backward(0)
+        self._set_motor_backward(0)
