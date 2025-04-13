@@ -1,0 +1,16 @@
+{
+  "component" :{
+    "example.processEmission": {
+      "author": "Thinh",
+      "version": "0.1.3",
+      "build": {
+        "build_system" :"zip"
+      },
+      "publish": {
+        "bucket": "buckbucket123456",
+        "region": "us-east-2"
+      }
+    }
+  },
+  "gdk_version": "1.0.0"
+}
