@@ -32,14 +32,14 @@ class MQTTClient:
         self.client.configureDrainingFrequency(2)  # Draining: 2 Hz
         self.client.configureConnectDisconnectTimeout(10)  # 10 sec
         self.client.configureMQTTOperationTimeout(5)  # 5 sec
-        self.client.onMessage = self.customOnMessage
+        #self.client.onMessage = self.customOnMessage
         # Subscribe to the result topic for this device
-        result_topic = "example.processEmission/vehicle/emission/results"
+        result_topic = "vehicle/emission/results"
         self.client.subscribeAsync(result_topic, 1, ackCallback=self.customSubackCallback, messageCallback=self.customOnMessage)
         print(f"[Device {self.device_id}] Subscribed to {result_topic}")
 
 
-    def customOnMessage(self,message):
+    def customOnMessage(self, client, userdata, message):
         #TODO 3: fill in the function to show your received message
         print("client {} received payload {} from topic {}".format(self.device_id,message.payload.decode() , message.topic))
 
@@ -73,7 +73,6 @@ class MQTTClient:
             # Publish the payload to the specified topic
             #print(f"Publishing: {payload} to {topic}")
             self.client.publishAsync(topic, payload, 0, ackCallback=self.customPubackCallback)
-            time.sleep(0.5)
             # Sleep to simulate real-time data publishing
             
 
