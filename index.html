@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>PulsePoint Incidents</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        #controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #agencyInput {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 8px 16px;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #3367d6;
+        }
+
+        .status {
+            font-style: italic;
+            color: #666;
+        }
+
+        .incidents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        .incident-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+
+        .incident-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .incident-type {
+            font-weight: bold;
+            color: #e91e63;
+            margin-bottom: 8px;
+        }
+
+        .incident-location {
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .incident-units {
+            color: #4caf50;
+            font-weight: bold;
+        }
+
+        .incident-time {
+            color: #777;
+            font-size: 0.9em;
+            margin-top: 8px;
+        }
+
+        .incident-full-address {
+            color: #555;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 30px;
+            font-size: 18px;
+            color: #666;
+        }
+
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+            margin-left: 20px;
+        }
+
+        .auto-refresh input {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>PulsePoint Incidents</h1>
+
+        <div id="controls">
+            <input type="text" id="agencyInput" placeholder="Agency ID (default: EMS1174)" value="EMS1174">
+            <button id="fetchBtn">Fetch Incidents</button>
+            <span id="status" class="status"></span>
+            <div class="auto-refresh">
+                <input type="checkbox" id="autoRefresh" checked>
+                <label for="autoRefresh">Auto-refresh</label>
+                <select id="refreshInterval">
+                    <option value="30">30 seconds</option>
+                    <option value="60" selected>1 minute</option>
+                    <option value="300">5 minutes</option>
+                </select>
+            </div>
+            <div style="margin-left: 20px;">
+                <input type="checkbox" id="debugMode">
+                <label for="debugMode">Debug Mode</label>
+            </div>
+        </div>
+
+        <div id="debugInfo"
+            style="display: none; margin-bottom: 20px; padding: 10px; background-color: #f8f9fa; border: 1px solid #ddd; border-radius: 4px;">
+            <h3>Debug Information</h3>
+            <pre id="debugContent" style="white-space: pre-wrap; overflow: auto; max-height: 300px;"></pre>
+        </div>
+
+        <div id="incidents" class="incidents-grid">
+            <div class="loading">Loading incidents...</div>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+
+</html>
