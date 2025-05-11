@@ -1,0 +1,22 @@
+{
+  "name": "pulsepoint-electron-app",
+  "version": "1.0.0",
+  "description": "Electron app for PulsePoint incident data",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "keywords": [
+    "electron",
+    "pulsepoint",
+    "incidents"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "dependencies": {}
+}
