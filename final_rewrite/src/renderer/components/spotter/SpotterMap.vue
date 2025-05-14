@@ -34,6 +34,7 @@ const props = defineProps({
       typeof v.lat === 'number' &&
       typeof v.lon === 'number'
   }
+  
 });
 
 defineExpose({

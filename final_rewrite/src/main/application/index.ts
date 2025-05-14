@@ -5,6 +5,7 @@ import started from "electron-squirrel-startup";
 
 import PulsePointService from "../services/pulsepoint";
 import FlightsService from "../services/flights";
+import GpsService from "../services/gps";
 
 export default class Spotter {
   private app: Electron.App;
@@ -13,6 +14,7 @@ export default class Spotter {
 
   private pulsepointService: PulsePointService;
   private flightsService: FlightsService;
+  private gpsService: GpsService;
 
   constructor() {
     this.app = app;
@@ -29,6 +31,14 @@ export default class Spotter {
       this.initializeServices();
 
       this.createWindow();
+
+      // Start GpsService AFTER mainWindow is created and assigned
+      if (this.mainWindow) {
+        this.gpsService.start(this.mainWindow); // Pass the created mainWindow
+      } else {
+        console.error("mainWindow is not available to start GpsService.");
+      }
+      
     });
 
     // Quit when all windows are closed, except on macOS. There, it's common
@@ -53,6 +63,7 @@ export default class Spotter {
 
     this.pulsepointService = new PulsePointService();
     this.flightsService = new FlightsService("http://localhost:8080");
+    this.gpsService = new GpsService();
 
     ipcMain.handle("pulsepoint:get-incidents", async (event, agencyId) => {
       return await this.pulsepointService.getIncidents(agencyId);

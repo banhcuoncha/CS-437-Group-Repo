@@ -10,3 +10,14 @@ contextBridge.exposeInMainWorld('pulsepointService', {
 contextBridge.exposeInMainWorld('flightsService', {
   getAircrafts: () => ipcRenderer.invoke('flights:get-aircrafts')
 });
+
+contextBridge.exposeInMainWorld('gpsService', {
+  onUpdate: (callback: (event: Electron.IpcRendererEvent, data: { lat: number; lon: number }) => void) =>
+    ipcRenderer.on('gps-data-update', callback),
+  onError: (callback: (event: Electron.IpcRendererEvent, error: string) => void) =>
+    ipcRenderer.on('gps-data-error', callback),
+  removeAllListeners: () => { // Important for component unmount
+    ipcRenderer.removeAllListeners('gps-data-update');
+    ipcRenderer.removeAllListeners('gps-data-error');
+  }
+});

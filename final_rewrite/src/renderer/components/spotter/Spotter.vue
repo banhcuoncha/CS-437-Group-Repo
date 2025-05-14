@@ -72,11 +72,20 @@
 </template>
 
 <script setup lang="ts">
+
+interface Position {
+  lat: number;
+  lon: number;
+}
 // Dummy coordinates - Remove this when you can -- Neil
-const currentPosition = ref<{ lat: number; lon: number }>({
+const dummyPosition: Position = {
   lat: 40.10301,
   lon: -88.22494
-});
+};
+
+const currentPosition = ref<Position>({ ...dummyPosition});
+
+const gpsError = ref<string | null>(null);
 // new function to center on current location
 function setMapLocationToCurrent() {
   map.value?.centerOnCurrent?.()
@@ -270,5 +279,29 @@ onMounted(() => {
   setInterval(() => {
     fetchAircrafts();
   }, 1000);
+
+  // --- GPS Integration: Listen for updates from the main process ---
+  if (window.gpsService) {
+    window.gpsService.onUpdate((_event, data: Position) => {
+      console.log('Received GPS data in Spotter.vue:', data);
+      currentPosition.value = { // Update the ref
+        lat: data.lat,
+        lon: data.lon,
+      };
+      gpsError.value = null; // Clear any previous error on successful update
+    });
+
+    window.gpsService.onError((_event, errorMsg: string) => {
+      console.error('Received GPS error in Spotter.vue:', errorMsg);
+      gpsError.value = errorMsg;
+      // Optionally, revert to dummy position if GPS fails,
+      // though currentPosition already holds the last known good or dummy value.
+      currentPosition.value = { ...dummyPosition }; // Uncomment if you want to force revert
+    });
+  } else {
+    console.warn('window.gpsService is not available. GPS updates will not be received.');
+    gpsError.value = 'GPS service not exposed by preload script.';
+  }
+  
 });
 </script>
