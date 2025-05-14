@@ -19,11 +19,17 @@
           Fetch Incidents
         </button>
 
+        <button
+          @click="setMapLocationToCurrent"
+          class = "px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          To Current Location
+        </button>
         <span class="italic text-gray-600">{{ status }}</span>
       </div>
     </div>
 
-    <SpotterMap class="mb-5" ref="map" :markers="markers" />
+    <SpotterMap class="mb-5" ref="map" :markers="markers" :currentPosition="currentPosition"/>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div class="flex flex-col h-full">
@@ -66,6 +72,16 @@
 </template>
 
 <script setup lang="ts">
+// Dummy coordinates - Remove this when you can -- Neil
+const currentPosition = ref<{ lat: number; lon: number }>({
+  lat: 40.10301,
+  lon: -88.22494
+});
+// new function to center on current location
+function setMapLocationToCurrent() {
+  map.value?.centerOnCurrent?.()
+}
+
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import SpotterConfig from './SpotterConfig.vue';

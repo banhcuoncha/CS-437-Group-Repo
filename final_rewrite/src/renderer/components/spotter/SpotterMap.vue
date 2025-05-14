@@ -7,21 +7,40 @@ import { onMounted, onUnmounted, ref, shallowRef, useId, watch } from 'vue';
 
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-
+import type { PropType } from 'vue';
+//import planeUrl from '../icons/aircraft.png';
 const mapId = useId();
 const map = shallowRef<L.Map | null>(null);
+const currentMarker = shallowRef<L.CircleMarker | null>(null);
 
+// plane icon
+// const planeIcon = L.icon({
+//   iconUrl: planeUrl,
+//   iconSize: [32,32],
+//   iconAnchor: [16,16],
+//   popupAnchor: [0,-16],
+// })
 const props = defineProps({
   markers: {
     type: Object,
-    default: () => [],
-    validator: value => value instanceof Map
+    default: () => new Map(),
+    //validator: value => value instanceof Map
+  },
+  currentPosition: {
+    type: Object as PropType<{ lat: number; lon: number }>,
+    default: () => ({ lat: 40.103, lon: -88.224 }),
+    validator: (v: any) =>
+      v != null &&
+      typeof v.lat === 'number' &&
+      typeof v.lon === 'number'
   }
 });
 
 defineExpose({
   highlightMarker,
-  unhighlightMarker
+  unhighlightMarker,
+  map,
+  centerOnCurrent
 });
 
 const baseMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -49,6 +68,50 @@ watch(() => props.markers, (markers, oldMarkers) => {
   }
 }, { deep: true, immediate: true });
 
+// New watch block for curPos
+watch(
+  () => props.currentPosition,
+  (pos) => {
+    if (!map.value) return;
+    // remove old one
+    if (currentMarker.value) {
+      map.value.removeLayer(currentMarker.value);
+      currentMarker.value = null;
+    }
+    // add new one
+    if (pos && typeof pos.lat === 'number' && typeof pos.lon === 'number') {
+      
+      currentMarker.value = L.circleMarker([pos.lat, pos.lon], {
+        radius: 8
+      }).addTo(map.value);
+
+    }
+  },
+  { immediate: true }
+);
+
+function centerOnCurrent() {
+  const pos = props.currentPosition;
+  if (map.value && pos) {
+    map.value.setView([pos.lat, pos.lon], 20);
+  }
+}
+
+
+function updateCurrentMarker(pos: { lat: number; lon: number } | null) {
+  if (!map.value) return;
+  // remove old
+  if (currentMarker.value) {
+    map.value.removeLayer(currentMarker.value);
+    currentMarker.value = null;
+  }
+  // add new
+  if (pos) {
+    const m = L.circleMarker([pos.lat, pos.lon], { radius: 8 })
+      .addTo(map.value);
+    currentMarker.value = m;
+  }
+}
 function highlightMarker(marker: any) {
   marker.openPopup();
   map.value?.setView(marker.getLatLng(), 10);
@@ -60,7 +123,7 @@ function unhighlightMarker(marker: any) {
 
 function initMap() {
   map.value = L.map(mapId, {
-    center: [40.11, -88.27],
+    center: [props.currentPosition.lat, props.currentPosition.lon],
     zoom: 12,
     layers: [baseMap, ...Object.values(layers.value)]
   });
@@ -73,6 +136,7 @@ function initMap() {
 
 onMounted(() => {
   initMap();
+  updateCurrentMarker(props.currentPosition);
 });
 
 onUnmounted(() => {
